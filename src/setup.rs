@@ -15,32 +15,19 @@ pub fn setup_algo(
     let g1 = G1Projective::generator();
 
     print!("Starting Setup Phase");
-    let (m, n) = (gates_matrix.len() - 1, gates_matrix[0].len());
+    let (m, n) = (gates_matrix.len(), gates_matrix[0].len());
     assert!(m == 5, "m isnt 5");
-    assert!(n == 8);
 
     let gates_matrix: Vec<Vec<Fr>> = (0..m)
         .map(|i| (0..n).map(|j| (Fr::from(gates_matrix[i][j]))).collect())
         .collect();
 
-    let q_l: Vec<Fr> = gates_matrix[0].iter().map(|x| Fr::from(*x)).collect();
-    let q_r: Vec<Fr> = gates_matrix[1].iter().map(|x| Fr::from(*x)).collect();
-    let q_m: Vec<Fr> = gates_matrix[2].iter().map(|x| Fr::from(*x)).collect();
-    let q_o: Vec<Fr> = gates_matrix[3].iter().map(|x| Fr::from(*x)).collect();
-    let q_c: Vec<Fr> = gates_matrix[4].iter().map(|x| Fr::from(*x)).collect();
-
-    println!("\nql: {:?}", q_l);
-    println!("qr: {:?}", q_r);
-    println!("qm: {:?}", q_m);
-    println!("qo: {:?}", q_o);
-    println!("qc: {:?}", q_c);
-
     let domain = Radix2EvaluationDomain::<Fr>::new(n).unwrap();
-    let q_l = Evaluations::from_vec_and_domain(q_l, domain).interpolate();
-    let q_r = Evaluations::from_vec_and_domain(q_r, domain).interpolate();
-    let q_m = Evaluations::from_vec_and_domain(q_m, domain).interpolate();
-    let q_o = Evaluations::from_vec_and_domain(q_o, domain).interpolate();
-    let q_c = Evaluations::from_vec_and_domain(q_c, domain).interpolate();
+    let q_l = Evaluations::from_vec_and_domain(gates_matrix[0].clone(), domain).interpolate();
+    let q_r = Evaluations::from_vec_and_domain(gates_matrix[1].clone(), domain).interpolate();
+    let q_m = Evaluations::from_vec_and_domain(gates_matrix[2].clone(), domain).interpolate();
+    let q_o = Evaluations::from_vec_and_domain(gates_matrix[3].clone(), domain).interpolate();
+    let q_c = Evaluations::from_vec_and_domain(gates_matrix[4].clone(), domain).interpolate();
 
     let qs = [q_l, q_r, q_m, q_o, q_c];
 

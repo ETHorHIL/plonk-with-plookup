@@ -59,7 +59,7 @@ pub mod tests {
         table.insert((one, zero), zero);
         table.insert((zero, one), zero);
         table.insert((one, one), zero);
-        //let table = LookUp::new(table);
+        let table = LookUp::new(table);
 
         let mut circuit = Circuit::new();
         circuit.add_constraint_with_lookup("x", Operation::Empty, "y", "0");
