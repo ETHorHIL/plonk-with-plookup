@@ -31,10 +31,14 @@ pub struct Circuit<'l> {
     a: Vec<&'l str>,
     b: Vec<&'l str>,
     c: Vec<&'l str>,
-    op: Vec<Vec<i32>>,
+    q_l: Vec<i32>,
+    q_r: Vec<i32>,
+    q_m: Vec<i32>,
+    q_o: Vec<i32>,
+    q_c: Vec<i32>,
+    q_lookup: Vec<i32>,
     pub pub_gate_position: Vec<usize>,
     pub pub_gate_value: Vec<i32>,
-    lookup: Vec<bool>,
 }
 
 impl<'l> Circuit<'l> {
@@ -42,18 +46,27 @@ impl<'l> Circuit<'l> {
         let a = Vec::new();
         let b = Vec::new();
         let c = Vec::new();
-        let op = Vec::new();
-        let lookup: Vec<bool> = Vec::new();
+
+        let q_l: Vec<i32> = Vec::new();
+        let q_r: Vec<i32> = Vec::new();
+        let q_m: Vec<i32> = Vec::new();
+        let q_o: Vec<i32> = Vec::new();
+        let q_c: Vec<i32> = Vec::new();
+        let q_lookup: Vec<i32> = Vec::new();
         let pub_gate_position = Vec::new();
         let pub_gate_value = Vec::new();
         Circuit {
             a,
             b,
             c,
-            op,
+            q_l,
+            q_r,
+            q_m,
+            q_o,
+            q_c,
+            q_lookup,
             pub_gate_position,
             pub_gate_value,
-            lookup,
         }
     }
 
@@ -67,21 +80,29 @@ impl<'l> Circuit<'l> {
         self.a.push(a);
         self.b.push(b);
         self.c.push(equals_c);
-        self.lookup.push(false);
 
         match operation {
-            Operation::Add => self.op.push(vec![1, 1, 0, -1, 0]),
-            Operation::Mul => self.op.push(vec![0, 0, 1, -1, 0]),
-            Operation::Const => self
-                .op
-                .push(vec![0, 1, 0, 0, -1 * b.parse::<i32>().unwrap()]),
-            Operation::PublicInput => {
-                self.pub_gate_position.push(self.op.len());
-                self.pub_gate_value.push(b.parse::<i32>().unwrap());
-                self.op.push(vec![0, 1, 0, 0, 0]);
+            Operation::Add => self.apply_operation(vec![1, 1, 0, -1, 0, 0]),
+            Operation::Mul => self.apply_operation(vec![0, 0, 1, -1, 0, 0]),
+            Operation::Const => {
+                self.apply_operation(vec![0, 1, 0, 0, -1 * b.parse::<i32>().unwrap(), 0])
             }
-            Operation::Empty => self.op.push(vec![0, 0, 0, 0, 0]),
+            Operation::PublicInput => {
+                self.pub_gate_position.push(self.q_r.len());
+                self.pub_gate_value.push(b.parse::<i32>().unwrap());
+                self.apply_operation(vec![0, 1, 0, 0, 0, 0]);
+            }
+            Operation::Empty => self.apply_operation(vec![0, 0, 0, 0, 0, 0]),
         }
+    }
+
+    fn apply_operation(&mut self, op: Vec<i32>) {
+        self.q_l.push(op[0]);
+        self.q_r.push(op[1]);
+        self.q_m.push(op[2]);
+        self.q_o.push(op[3]);
+        self.q_c.push(op[4]);
+        self.q_lookup.push(op[5]);
     }
 
     pub fn get_wires(&self) -> Vec<&str> {
@@ -96,14 +117,26 @@ impl<'l> Circuit<'l> {
     }
 
     pub fn get_gates_matrix(&self) -> Vec<Vec<i32>> {
-        transpose(self.op.clone())
+        vec![
+            self.q_l.clone(),
+            self.q_r.clone(),
+            self.q_m.clone(),
+            self.q_o.clone(),
+            self.q_c.clone(),
+            self.q_lookup.clone(),
+        ]
     }
 
     pub fn lenght(&self) -> usize {
-        assert!(self.a.len() == self.b.len());
-        assert!(self.b.len() == self.c.len());
-        assert!(self.c.len() == self.op.len());
         let n = self.a.len();
+        assert!(self.b.len() == n);
+        assert!(self.c.len() == n);
+        assert!(self.q_l.len() == n);
+        assert!(self.q_r.len() == n);
+        assert!(self.q_m.len() == n);
+        assert!(self.q_o.len() == n);
+        assert!(self.q_c.len() == n);
+
         assert!(n & n - 1 == 0, "n must be a power of 2");
         n
     }
@@ -114,12 +147,13 @@ impl<'l> Circuit<'l> {
         let a = witness[..n / 3].to_vec();
         let b = witness[n / 3..(2 * n) / 3].to_vec();
         let c = witness[(2 * n) / 3..n].to_vec();
-        for i in 0..self.op.len() {
-            if a[i] * self.op[i][0]
-                + b[i] * self.op[i][1]
-                + c[i] * self.op[i][2]
-                + a[i] * b[i] * self.op[i][3]
-                + self.op[i][4]
+
+        for i in 0..n / 3 {
+            if a[i] * self.q_l[i]
+                + b[i] * self.q_r[i]
+                + c[i] * self.q_m[i]
+                + a[i] * b[i] * self.q_o[i]
+                + self.q_c[i]
                 != 0
             {
                 return false;
@@ -129,7 +163,7 @@ impl<'l> Circuit<'l> {
     }
 
     pub fn add_lookup(&mut self) {
-        self.lookup[self.a.len() - 1] = true;
+        self.q_lookup[self.a.len() - 1] = 1;
     }
 
     pub fn add_constraint_with_lookup(

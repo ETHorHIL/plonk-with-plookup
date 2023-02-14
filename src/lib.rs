@@ -59,7 +59,7 @@ pub mod tests {
         table.insert((one, zero), zero);
         table.insert((zero, one), zero);
         table.insert((one, one), zero);
-        let table = LookUp::new(table);
+        //let table = LookUp::new(table);
 
         let mut circuit = Circuit::new();
         circuit.add_constraint_with_lookup("x", Operation::Empty, "y", "0");
@@ -127,6 +127,17 @@ pub mod tests {
         // We start with a setup that computes the trusted setup and does some
         // precomputation
         let n = circuit.lenght();
+
+        println!(
+            "circuit.get_gates_matrix(): {:?}\n
+        circuit.get_permuted_indices(): {:?}\n
+        circuit.pub_gate_position: {:?}\n
+        circuit.pub_gate_value: {:?}\n",
+            circuit.get_gates_matrix(),
+            circuit.get_permuted_indices(),
+            circuit.pub_gate_position,
+            circuit.pub_gate_value
+        );
 
         let setup_output = setup_algo(
             circuit.get_gates_matrix(),
@@ -273,81 +284,6 @@ pub mod tests {
             circuit.get_permuted_indices(),
             circuit.pub_gate_position,
             circuit.pub_gate_value,
-        );
-        println!("Setup Complete. Output: {:?}", setup_output);
-
-        // # The prover calculates the proof
-        let proof = prover_algo(witness, &setup_output.clone());
-        println!("Computed Proof: {:?}", proof);
-
-        //# Verifier checks if proof checks out
-        verifier_algo(
-            proof,
-            n,
-            setup_output.p_i_poly,
-            setup_output.verifier_preprocessing,
-            setup_output.perm_precomp.2,
-        );
-    }
-
-    #[test]
-    fn vitalik_example_old() {
-        /*
-        Old code that doesnt use the Circuit struct. Keeping it around for myself
-        because my python implementation is equivalent
-
-        */
-        // We only care about detecting repeating values in the equations
-        let a = ["x", "var1", "var2", "1", "1", "var3", "empty1", "empty2"];
-        let b = ["x", "x", "x", "5", "35", "5", "empty3", "empty4"];
-        let c = ["var1", "var2", "var3", "5", "35", "35", "empty5", "empty6"];
-
-        let mut wires = a.to_vec();
-        wires.append(b.to_vec().as_mut());
-        wires.append(c.to_vec().as_mut());
-
-        // Gates
-        let add = vec![1, 1, 0, -1, 0];
-        let mul = vec![0, 0, 1, -1, 0];
-        let const5 = vec![0, 1, 0, 0, -5];
-        let public_input = vec![0, 1, 0, 0, 0];
-        let empty = vec![0, 0, 0, 0, 0];
-
-        let gates_matrix = vec![
-            mul.clone(),
-            mul,
-            add.clone(),
-            const5,
-            public_input,
-            add,
-            empty.clone(),
-            empty,
-        ];
-
-        let permutation = permute_indices(wires);
-
-        // To enable a public input 35 we need to specify the position
-        // of the gate in L and the value of the public input in p_i
-        let pub_gate_position = vec![4 as usize];
-        let pub_input_value = vec![35];
-        let n = gates_matrix.len();
-
-        let gates_matrix = transpose(gates_matrix);
-
-        // To get the witness, the prover applies his private input x=3 to the
-        //circuit and writes down the value of every wire.
-        let witness = vec![
-            3, 9, 27, 1, 1, 30, 0, 0, 3, 3, 3, 5, 35, 5, 0, 0, 9, 27, 30, 5, 35, 35, 0, 0,
-        ];
-        let witness: Vec<Fr> = (0..witness.len()).map(|f| Fr::from(witness[f])).collect();
-
-        // We start with a setup that computes the trusted setup and does some
-        // precomputation
-        let setup_output = setup_algo(
-            gates_matrix,
-            permutation,
-            pub_gate_position,
-            pub_input_value,
         );
         println!("Setup Complete. Output: {:?}", setup_output);
 
