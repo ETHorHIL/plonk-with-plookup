@@ -15,7 +15,7 @@ pub fn setup_algo(
     let g1 = G1Projective::generator();
 
     print!("Starting Setup Phase");
-    let (m, n) = (gates_matrix.len(), gates_matrix[0].len());
+    let (m, n) = (gates_matrix.len() - 1, gates_matrix[0].len());
     assert!(m == 5, "m isnt 5");
 
     let gates_matrix: Vec<Vec<Fr>> = (0..m)
