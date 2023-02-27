@@ -1,3 +1,4 @@
+use crate::circuit::Circuit;
 use ark_ec::models::short_weierstrass::*;
 use ark_ff::*;
 use ark_poly::univariate::DensePolynomial;
@@ -5,22 +6,25 @@ use ark_poly::*;
 use ark_test_curves::bls12_381::*;
 use ark_test_curves::*;
 
+///use crate::plookup::lookup::lookup::LookUp;
+//use crate::plookup::lookup::table::{Generic, LookUpTable};
+
 // https://github.com/ETHorHIL/Plonk_Py/blob/master/setup.py
-pub fn setup_algo(
-    gates_matrix: Vec<Vec<i32>>,
-    permutation: Vec<usize>,
-    pub_input_position: Vec<usize>,
-    pub_input_value: Vec<i32>,
-) -> SetupOutput {
+pub fn setup_algo(circuit: &mut Circuit) -> SetupOutput {
+    let gates_matrix = circuit.get_gates_matrix();
+    let permutation = circuit.get_permuted_indices();
+    let pub_input_position = &circuit.pub_gate_position;
+    let pub_input_value = &circuit.pub_gate_value;
+
     let g1 = G1Projective::generator();
 
     print!("Starting Setup Phase");
     let (m, n) = (gates_matrix.len() - 1, gates_matrix[0].len());
     assert!(m == 5, "m isnt 5");
 
-    let gates_matrix: Vec<Vec<Fr>> = (0..m)
-        .map(|i| (0..n).map(|j| (Fr::from(gates_matrix[i][j]))).collect())
-        .collect();
+    /*let gates_matrix: Vec<Vec<Fr>> = (0..m)
+    .map(|i| (0..n).map(|j| (Fr::from(gates_matrix[i][j]))).collect())
+    .collect();*/
 
     let domain = Radix2EvaluationDomain::<Fr>::new(n).unwrap();
     let q_l = Evaluations::from_vec_and_domain(gates_matrix[0].clone(), domain).interpolate();
@@ -28,14 +32,15 @@ pub fn setup_algo(
     let q_m = Evaluations::from_vec_and_domain(gates_matrix[2].clone(), domain).interpolate();
     let q_o = Evaluations::from_vec_and_domain(gates_matrix[3].clone(), domain).interpolate();
     let q_c = Evaluations::from_vec_and_domain(gates_matrix[4].clone(), domain).interpolate();
+    let q_k = Evaluations::from_vec_and_domain(gates_matrix[5].clone(), domain).interpolate();
 
-    let qs = [q_l, q_r, q_m, q_o, q_c];
+    let qs = [q_l, q_r, q_m, q_o, q_c, q_k];
 
     // The public input poly vanishes everywhere except for the position of the
     // public input gate where it evaluates to -(public_input)
     let mut public_input: Vec<Fr> = (0..n).map(|_x| Fr::from(0)).collect();
     for i in 0..pub_input_position.len() {
-        public_input[pub_input_position[i]] = Fr::from(-1 * pub_input_value[i]);
+        public_input[pub_input_position[i]] = Fr::from(Fr::from(-1) * pub_input_value[i]);
         //using -1 is correct
     }
 
@@ -75,13 +80,12 @@ pub fn setup_algo(
     // We perform the trusted setup.
     let tau = Fr::rand(&mut rng);
     let mut crs = vec![G1Projective::generator() * (tau.pow([0 as u64]))];
-    for i in 1..(n + 3) {
+    for i in 1..(n + 5) {
         crs.push(g1 * (tau.pow([i as u64])));
     }
-    assert!(crs.len() == n + 3);
+    assert!(crs.len() == n + 5);
 
     // We take some work off the shoulders of the verifier by preprocessing
-    println!("Starting Verifier Preprocessing...");
     let q_exp: Vec<Projective<g1::Config>> = (0..qs.len())
         .map(|f| evaluate_in_exponent(&crs, &qs[f]))
         .collect();
@@ -90,10 +94,19 @@ pub fn setup_algo(
         .collect();
     let x_exp = G2Projective::generator() * tau;
 
-    //let lookup_table: (Vec<Fr>, Vec<Fr>, Vec<Fr>) =
+    let table = circuit.get_mut_table();
+    table.generate_table_polys();
 
-    let verifier_preprocessing = (q_exp, s_exp, x_exp);
+    let tables = table.get_table_polys();
+
+    let table_polys_exp: Vec<Projective<g1::Config>> = (0..3)
+        .map(|i| evaluate_in_exponent(&crs, &tables[i]))
+        .collect();
+
+    let verifier_preprocessing = (q_exp, s_exp, x_exp, table_polys_exp);
     let perm_precomp = (id_domain, perm_domain, k, ss);
+
+    println!("Setup Complete...");
 
     SetupOutput {
         crs,
@@ -107,7 +120,7 @@ pub fn setup_algo(
 #[derive(Debug, Clone)]
 pub struct SetupOutput {
     pub crs: Vec<Projective<g1::Config>>,
-    pub qs: [DensePolynomial<Fp<MontBackend<FrConfig, 4>, 4>>; 5],
+    pub qs: [DensePolynomial<Fp<MontBackend<FrConfig, 4>, 4>>; 6],
     pub p_i_poly: DensePolynomial<
         ark_ff::Fp<ark_ff::MontBackend<ark_test_curves::bls12_381::FrConfig, 4>, 4>,
     >,
@@ -123,6 +136,7 @@ pub struct SetupOutput {
         Vec<Projective<g1::Config>>,
         Vec<Projective<g1::Config>>,
         Projective<g2::Config>,
+        Vec<Projective<g1::Config>>,
     ),
 }
 

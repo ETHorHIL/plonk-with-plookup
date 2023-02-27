@@ -1,7 +1,7 @@
 Todo next:
-change the preprocess fn here:https://github.com/kevaundray/plookup/blob/master/src/lookup/table/mod.rs
-to return the polynomials
-
+- checck if extended domains are needed
+- make public input part of circuit struct
+- make table part of circuit struct
 
 Todo long term:
 - change use ark_test_curves::bls12_381::Fr; to ark_bls12_381::Fr everywhere
