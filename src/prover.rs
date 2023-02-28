@@ -1,5 +1,6 @@
 use crate::circuit::Circuit;
-use crate::setup::{evaluate_in_exponent, SetupOutput};
+use crate::setup::Setup;
+use crate::utils::evaluate_in_exponent;
 use ark_ec::models::short_weierstrass::*;
 use ark_ff::Field;
 use ark_ff::*;
@@ -12,12 +13,12 @@ use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
 
 // https://github.com/ETHorHIL/Plonk_Py/blob/master/prover.py
-pub fn prover_algo(witness: Vec<Fr>, setup_output: &SetupOutput, circuit: Circuit) -> Proof {
+pub fn prover_algo(witness: Vec<Fr>, setup_output: &Setup, circuit: Circuit) -> Proof {
     println!("Starting setup algorithm");
     let n = witness.len() / 3;
     assert!(n & n - 1 == 0, "n must be a power of 2");
-    let (id_domain, perm_domain, k, ss) = &setup_output.perm_precomp;
-    let qs = &setup_output.qs;
+    let (id_domain, perm_domain, k, ss) = setup_output.perm_precomp.as_tuple();
+    let qs = &setup_output.qs.as_vec();
     let crs = &setup_output.crs;
 
     /*
@@ -51,7 +52,7 @@ pub fn prover_algo(witness: Vec<Fr>, setup_output: &SetupOutput, circuit: Circui
     let s2_ext3 = s2.clone().evaluate_over_domain(domain_3n);
     let s3_ext3 = s3.clone().evaluate_over_domain(domain_3n);
     let p_i_poly_ext3 = setup_output
-        .p_i_poly
+        .pub_input
         .clone()
         .evaluate_over_domain(domain_3n);
     let q_l_ext3 = qs[0].clone().evaluate_over_domain(domain_3n);
@@ -483,7 +484,7 @@ pub fn prover_algo(witness: Vec<Fr>, setup_output: &SetupOutput, circuit: Circui
     let z_2_shift_zeta = accumulator_poly_z2.evaluate(&zeta_shift);
     let h_1_shift_zeta = h_1_poly.evaluate(&zeta_shift);
     let h_2_zeta = h_2_poly.evaluate(&zeta);
-    let p_i_zeta = setup_output.p_i_poly.evaluate(&zeta);
+    let p_i_zeta = setup_output.pub_input.evaluate(&zeta);
 
     let fifth_output = [
         a_zeta,

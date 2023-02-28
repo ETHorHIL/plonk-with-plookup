@@ -12,7 +12,7 @@ pub mod tests {
     use super::*;
     use ark_test_curves::bls12_381::Fr;
     use prover::prover_algo;
-    use setup::setup_algo;
+    use setup::Setup;
     use verifier::verifier_algo;
 
     #[test]
@@ -53,7 +53,7 @@ pub mod tests {
         circuit.add_constraint("null", Operation::Const, "b_1", "1");
         circuit.add_constraint("null", Operation::Const, "b_2", "5");
         circuit.add_constraint("null", Operation::Const, "b_3", "9");
-        circuit.add_constraint_with_lookup("b_1", Operation::Empty, "b_2", "b_3"); // I can enter whatever I want here as long as its different numbers
+        circuit.add_constraint_with_lookup("b_1", Operation::Empty, "b_2", "b_3");
 
         let table = circuit.get_mut_table();
         table.insert(Fr::from(0), Fr::from(4), Fr::from(8));
@@ -61,19 +61,20 @@ pub mod tests {
         table.insert(Fr::from(2), Fr::from(6), Fr::from(10));
         table.insert(Fr::from(3), Fr::from(7), Fr::from(11));
 
-        let witness = Witness::new(vec![0, 0, 0, 1], vec![1, 5, 9, 5], vec![1, 5, 9, 9]); // a 3 doesnt matter
-        circuit.check_witness(&witness);
-        let n = circuit.lenght();
+        let witness = Witness::new(vec![0, 0, 0, 1], vec![1, 5, 9, 5], vec![1, 5, 9, 9]);
+        circuit.check(&witness);
+        let n = circuit.len();
 
-        let setup_output = setup_algo(&mut circuit);
-        let proof = prover_algo(witness.combined(), &setup_output.clone(), circuit);
+        let setup_output = Setup::process(&mut circuit);
+
+        let proof = prover_algo(witness.combined(), &setup_output, circuit);
 
         verifier_algo(
             proof,
             n,
-            setup_output.p_i_poly,
-            setup_output.verifier_preprocessing,
-            setup_output.perm_precomp.2,
+            setup_output.pub_input,
+            setup_output.verifier_prep,
+            setup_output.perm_precomp.k,
         );
     }
 
@@ -149,17 +150,17 @@ pub mod tests {
 
         let witness = Witness::new(a, b, c);
         circuit.check_witness(&witness);
-        let n = circuit.lenght();
+        let n = circuit.len();
 
-        let setup_output = setup_algo(&mut circuit);
+        let setup_output = Setup::process(&mut circuit);
         let proof = prover_algo(witness.combined(), &setup_output.clone(), circuit);
 
         verifier_algo(
             proof,
             n,
-            setup_output.p_i_poly,
-            setup_output.verifier_preprocessing,
-            setup_output.perm_precomp.2,
+            setup_output.pub_input,
+            setup_output.verifier_prep,
+            setup_output.perm_precomp.k,
         );
     }
 }

@@ -46,7 +46,7 @@ impl Table {
         None
     }
 
-    pub fn generate_table_polys(&mut self) {
+    pub fn generate_table_polys(&mut self) -> [DensePolynomial<Fr>; 3] {
         let n = self.x.len();
         assert!(self.y.len() == n);
         assert!(self.z.len() == n);
@@ -57,6 +57,11 @@ impl Table {
         self.poly_x = Some(Evaluations::from_vec_and_domain(self.x.clone(), domain).interpolate());
         self.poly_y = Some(Evaluations::from_vec_and_domain(self.y.clone(), domain).interpolate());
         self.poly_z = Some(Evaluations::from_vec_and_domain(self.z.clone(), domain).interpolate());
+        [
+            self.poly_x.clone().unwrap(),
+            self.poly_y.clone().unwrap(),
+            self.poly_z.clone().unwrap(),
+        ]
     }
 
     pub fn get_table_polys(&self) -> [DensePolynomial<Fr>; 3] {

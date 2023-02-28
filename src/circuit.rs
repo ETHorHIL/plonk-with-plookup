@@ -141,8 +141,18 @@ impl<'l> Circuit<'l> {
         ]
     }
 
-    pub fn lenght(&self) -> usize {
+    pub fn len(&self) -> usize {
         let n = self.a.len();
+        n
+    }
+
+    pub fn width(&self) -> usize {
+        self.get_gates_matrix().len()
+    }
+
+    pub fn check(&self, witness: &Witness) -> bool {
+        let n = self.a.len();
+        assert!(n > 0);
         assert!(self.b.len() == n);
         assert!(self.c.len() == n);
         assert!(self.q_l.len() == n);
@@ -150,9 +160,10 @@ impl<'l> Circuit<'l> {
         assert!(self.q_m.len() == n);
         assert!(self.q_o.len() == n);
         assert!(self.q_c.len() == n);
-
+        assert!(self.q_c.len() == n);
+        assert!(self.table.len() == n);
         assert!(n & n - 1 == 0, "n must be a power of 2");
-        n
+        self.check_witness(witness)
     }
 
     pub fn check_witness(&self, witness: &Witness) -> bool {

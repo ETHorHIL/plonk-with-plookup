@@ -1,4 +1,5 @@
 use crate::prover::Proof;
+use crate::setup::VerifierPrep;
 use ark_ec::models::short_weierstrass::*;
 use ark_ec::pairing::Pairing;
 use ark_ec::Group;
@@ -14,12 +15,7 @@ pub fn verifier_algo(
     proof: Proof,
     n: usize,
     p_i_poly: DensePolynomial<Fr>,
-    verifier_preprocessing: (
-        Vec<Projective<g1::Config>>,
-        Vec<Projective<g1::Config>>,
-        Projective<g2::Config>,
-        Vec<Projective<g1::Config>>,
-    ),
+    verifier_prep: VerifierPrep,
     k: ark_ff::Fp<ark_ff::MontBackend<ark_test_curves::bls12_381::FrConfig, 4>, 4>,
 ) {
     println!("Starting Verification...");
@@ -34,7 +30,7 @@ pub fn verifier_algo(
         proof.fifth_output;
     let [w_zeta_eval_exp, w_zeta_omega_eval_exp] = proof.sixth_output;
 
-    let (q_exp, s_exp, x_exp, table_polys_exp) = verifier_preprocessing;
+    let (q_exp, s_exp, x_exp, table_polys_exp) = verifier_prep.as_tuple();
 
     let [q_l_exp, q_r_exp, q_m_exp, q_o_exp, q_c_exp, q_k_exp] =
         [q_exp[0], q_exp[1], q_exp[2], q_exp[3], q_exp[4], q_exp[5]];
