@@ -18,7 +18,7 @@ pub mod tests {
     #[test]
     fn test_plookup() {
 
-
+/*
         The constraints:
         a      |   op   | b      |c
         -------------------------------
