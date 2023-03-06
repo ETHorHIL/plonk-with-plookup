@@ -17,8 +17,7 @@ pub mod tests {
 
     #[test]
     fn test_plookup() {
-        /*
-        Prover proves that he knows x so that x + g(1,x) = 42. g(x,y) is some magical function we made up and evaluated in a lookup table.
+
 
         The constraints:
         a      |   op   | b      |c
