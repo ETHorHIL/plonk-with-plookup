@@ -44,8 +44,6 @@ pub mod tests {
         1 | 5 | 5
         1 | 9 | 9
         1 | 5 | 9
-
-        we have one read to our table: (1,1,42)
          */
 
         let mut circuit = Circuit::new();
