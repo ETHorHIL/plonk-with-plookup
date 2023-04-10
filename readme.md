@@ -12,10 +12,12 @@ Some tests are provided in the `lib.rs` file, which can serve as examples of how
 
 ## Todo List
 
-1. Modularize the code by breaking down the `prover_algo` function into smaller, more focused functions.
-2. Use more descriptive variable names to improve readability.
-3. Replace `for` loops with iterators and functional programming techniques for more concise and readable code.
-4. Use type aliases for complex types to make the code more readable.
+1. Check if I am using the correct function to switch from evaluation to coefficient representations.
+2. Check if Typechecks in `verifier_algo` are really not needed.
+3. Breake down the `prover_algo` function into smaller, more focused functions.
+4. Use more descriptive variable names.
+5. Replace `for` loops with iterators.
+6. Use type aliases for complex types.
 
 ## Contributing
 
