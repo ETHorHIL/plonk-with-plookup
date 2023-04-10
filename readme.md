@@ -12,8 +12,8 @@ Some tests are provided in the `lib.rs` file, which can serve as examples of how
 
 ## Todo List
 
-1. Modularize the code by breaking down the `prove` function into smaller, more focused functions.
-2. Use more descriptive variable names to improve readability and maintainability.
+1. Modularize the code by breaking down the `prover_algo` function into smaller, more focused functions.
+2. Use more descriptive variable names to improve readability.
 3. Replace `for` loops with iterators and functional programming techniques for more concise and readable code.
 4. Use type aliases for complex types to make the code more readable.
 
